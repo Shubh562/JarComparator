@@ -1,24 +1,25 @@
-from github import Github
+import requests
 
-def compare_branches(token, repo_name, base, head):
-    g = Github(token)
-    repo = g.get_repo(repo_name)
+def compare_branches(user, repo, branch1, branch2, token):
+    url = f"https://api.github.com/repos/{user}/{repo}/compare/{branch1}...{branch2}"
+    headers = {'Authorization': f'token {token}'}
+    
+    response = requests.get(url, headers=headers)
+    if response.status_code == 200:
+        data = response.json()
+        print(f"Comparing {branch1} to {branch2} in {user}/{repo}")
+        print(f"Total Commits: {data['total_commits']}")
+        for commit in data['commits']:
+            print(f"- {commit['commit']['author']['name']}: {commit['commit']['message']}")
+    else:
+        print("Failed to compare branches. Status code:", response.status_code)
 
-    comparison = repo.compare(base, head)
+# Replace these variables with your own details
+user = 'username'
+repo = 'repo'
+branch1 = 'branch1'
+branch2 = 'branch2'
+token = 'your_github_token'
 
-    modified_files = [file.filename for file in comparison.files if file.status == 'modified']
-    new_files = [file.filename for file in comparison.files if file.status == 'added']
-    deleted_files = [file.filename for file in comparison.files if file.status == 'removed']
+compare_branches(user, repo, branch1, branch2, token)
 
-    return modified_files, new_files, deleted_files
-
-# Example usage
-token = 'your-github-token'
-repo_name = 'organization-name/repository-name'
-base_branch = 'main'
-head_branch = 'feature-branch'
-
-modified, new, deleted = compare_branches(token, repo_name, base_branch, head_branch)
-print("Modified files:", modified)
-print("New files:", new)
-print("Deleted files:", deleted)
